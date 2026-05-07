@@ -1,39 +1,76 @@
 import * as THREE from 'three';
 import { TeapotGeometry } from 'three/addons/geometries/TeapotGeometry.js';
 
+let selectedObject = null; 
+
 export function createShapes() {
     const group = new THREE.Group();
     const material = new THREE.MeshStandardMaterial({ color: 0x44aa88, roughness: 0.5 });
 
-    const boxGeo = new THREE.BoxGeometry(1, 1, 1);
-    const box = new THREE.Mesh(boxGeo, material);
-    box.position.set(-3, 0.5, -3);
-    group.add(box);
+    const geometries = [
+        { geo: new THREE.BoxGeometry(1, 1, 1), pos: [-3, 0.5, -3], name: 'Box' },
+        { geo: new THREE.SphereGeometry(0.6, 32, 16), pos: [-1, 0.6, -3], name: 'Sphere' },
+        { geo: new THREE.ConeGeometry(0.6, 1.5, 32), pos: [1, 0.75, -3], name: 'Cone' },
+        { geo: new THREE.CylinderGeometry(0.5, 0.5, 1.5, 32), pos: [3, 0.75, -3], name: 'Cylinder' },
+        { geo: new THREE.TorusGeometry(0.4, 0.15, 16, 100), pos: [-3, 0.55, -1], name: 'Wheel' },
+        { geo: new TeapotGeometry(0.5), pos: [3, 0.5, -1], name: 'Teapot' }
+    ];
 
-    const sphereGeo = new THREE.SphereGeometry(0.6, 32, 16);
-    const sphere = new THREE.Mesh(sphereGeo, material);
-    sphere.position.set(-1, 0.6, -3);
-    group.add(sphere);
-
-    const coneGeo = new THREE.ConeGeometry(0.6, 1.5, 32);
-    const cone = new THREE.Mesh(coneGeo, material);
-    cone.position.set(1, 0.75, -3);
-    group.add(cone);
-
-    const cylinderGeo = new THREE.CylinderGeometry(0.5, 0.5, 1.5, 32);
-    const cylinder = new THREE.Mesh(cylinderGeo, material);
-    cylinder.position.set(3, 0.75, -3);
-    group.add(cylinder);
-
-    const torusGeo = new THREE.TorusGeometry(0.4, 0.15, 16, 100);
-    const torus = new THREE.Mesh(torusGeo, material);
-    torus.position.set(-3, 0.55, -1);
-    group.add(torus);
-
-    const teapotGeo = new TeapotGeometry(0.5);
-    const teapot = new THREE.Mesh(teapotGeo, material);
-    teapot.position.set(3, 0.5, -1);
-    group.add(teapot);
+    geometries.forEach(data => {
+        const mesh = new THREE.Mesh(data.geo, material.clone());
+        mesh.position.set(...data.pos);
+        mesh.name = data.name;
+        group.add(mesh);
+    });
 
     return group;
+}
+
+
+export function setSelectedObject(obj) {
+    if (selectedObject) {
+        selectedObject.traverse((child) => {
+            if (child.isMesh && child.material && child.material.emissive) {
+                child.material.emissive.setHex(0x000000); 
+            }
+        });
+    }
+
+    selectedObject = obj;
+
+    if (selectedObject) {
+        selectedObject.traverse((child) => {
+            if (child.isMesh && child.material && child.material.emissive) {
+                child.material.emissive.setHex(0x444444); 
+            }
+        });
+        console.log("Đang chọn:", selectedObject.name || "Group/Model");
+    } else {
+        console.log("Đã bỏ chọn");
+    }
+}
+
+
+export function handleTransformations(key) {
+    if (!selectedObject) return;
+
+    const step = 0.1;
+    const rotationStep = Math.PI / 18;
+
+    switch (key) {
+        case 'ArrowUp': selectedObject.position.y += step; break;
+        case 'ArrowDown': selectedObject.position.y -= step; break;
+        case 'ArrowLeft': selectedObject.position.x -= step; break;
+        case 'ArrowRight': selectedObject.position.x += step; break;
+
+        case 'w': selectedObject.position.z += step; break; 
+        case 's': selectedObject.position.z -= step; break; 
+
+        case 'r': selectedObject.rotation.x += rotationStep; break;
+        case 'e': selectedObject.rotation.y += rotationStep; break;
+        case 'q': selectedObject.rotation.z += rotationStep; break;
+
+        case '+': selectedObject.scale.multiplyScalar(1.1); break;
+        case '-': selectedObject.scale.multiplyScalar(0.9); break;
+    }
 }
