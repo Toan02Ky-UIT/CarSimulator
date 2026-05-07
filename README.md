@@ -9,6 +9,7 @@ Hệ thống được chia thành các module chính chạy độc lập trong c
 2. Nhiệm vụ
 - Thành viên 1: Lead Dev - Core, Camera & UI Control
 o	Nhiệm vụ: Viết file index.html, cấu hình Import Map để load Three.js từ CDN. Khởi tạo main.js chứa Scene, Camera, OrbitControls. Tích hợp thư viện UI (lil-gui qua CDN) để điều chỉnh near, far, chế độ hiển thị (Point/Line/Solid).
+
 o	Dependency: Làm khung sườn sớm để các thành viên khác có file index.html chạy Live Server thử nghiệm.
 - Thành viên 2: Geometry & Affine Transforms
 o	Nhiệm vụ: Code toàn bộ trong file geometry.js. Viết các hàm trả về Group chứa các khối (Hộp, Cầu, Nón, Trụ, Bánh xe, Ấm trà). Viết logic bắt sự kiện phím/chuột để tịnh tiến, xoay, scale các khối này.
