@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 
+
 export function setupEnvironment(scene) {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
