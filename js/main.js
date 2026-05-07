@@ -40,3 +40,35 @@ function animate() {
     renderer.render(scene, camera);
 }
 animate();
+
+import { handleTransformations, setSelectedObject } from './geometry.js';
+
+window.addEventListener('keydown', (event) => {
+    handleTransformations(event.key);
+});
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+window.addEventListener('click', (event) => {
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+
+    const intersects = raycaster.intersectObjects(scene.children, true); 
+
+    if (intersects.length > 0) {
+        let target = intersects[0].object;
+        
+        if (target.geometry.type === 'PlaneGeometry') return;
+
+        while (target.parent && target.parent !== scene) {
+            target = target.parent;
+        }
+
+        setSelectedObject(target);
+    } else {
+        setSelectedObject(null);
+    }
+});
