@@ -1,74 +1,130 @@
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 // Import các module của team
-import { createShapes } from './geometry.js';
-import { setupEnvironment } from './environment.js';
-import { loadCarModel } from './carModel.js';
+import { setupEnvironment } from "./environment.js";
+import { loadCarModel } from "./carModel.js";
+import { setupControls } from "./controls.js";
+import { updateCar, getSpeed } from "./physics.js";
+import { updateCamera } from "./cameraSystem.js";
+import { createRoad } from "./road.js";
+import { createTraffic, updateTraffic, getTrafficCars } from "./traffic.js";
+import { checkCollision } from "./collision.js";
+import { updateUI, showGameOver, hideGameOver, resetScore } from "./ui.js";
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb); 
+scene.background = new THREE.Color(0xbfdfff);
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(5, 5, 8); 
+const camera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000,
+);
+camera.position.set(5, 5, 8);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.shadowMap.enabled = true;
+
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+renderer.toneMappingExposure = 1.2;
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const controls = new OrbitControls(camera, renderer.domElement);
+// const controls = new OrbitControls(camera, renderer.domElement);
+let playerCar = null;
+let gameOver = false;
 const axesHelper = new THREE.AxesHelper(5);
 scene.add(axesHelper);
 
-
 setupEnvironment(scene);
+createRoad(scene);
+createTraffic(scene);
+setupControls();
 
-const myShapes = createShapes();
-scene.add(myShapes);
+loadCarModel(scene, (car) => {
+  playerCar = car;
+});
 
-loadCarModel(scene);
-
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
 function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+
+  updateCar(playerCar);
+
+  updateCamera(camera, playerCar);
+
+  updateTraffic();
+
+  updateUI(getSpeed());
+
+  if (!gameOver) {
+    const hit = checkCollision(playerCar, getTrafficCars());
+
+    if (hit) {
+      gameOver = true;
+
+      showGameOver();
+
+      setTimeout(() => {
+        // reset player
+        playerCar.position.set(0, 0.1, 0);
+
+        playerCar.rotation.y = Math.PI;
+
+        // reset traffic
+        getTrafficCars().forEach((car, index) => {
+          car.position.z = -20 - index * 20;
+        });
+
+        hideGameOver();
+
+        resetScore();
+
+        gameOver = false;
+      }, 1500);
+    }
+  }
+
+  renderer.render(scene, camera);
 }
 animate();
 
-import { handleTransformations, setSelectedObject } from './geometry.js';
+import { handleTransformations, setSelectedObject } from "./geometry.js";
 
-window.addEventListener('keydown', (event) => {
-    handleTransformations(event.key);
+window.addEventListener("keydown", (event) => {
+  handleTransformations(event.key);
 });
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-window.addEventListener('click', (event) => {
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+window.addEventListener("click", (event) => {
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-    raycaster.setFromCamera(mouse, camera);
+  raycaster.setFromCamera(mouse, camera);
 
-    const intersects = raycaster.intersectObjects(scene.children, true); 
+  const intersects = raycaster.intersectObjects(scene.children, true);
 
-    if (intersects.length > 0) {
-        let target = intersects[0].object;
-        
-        if (target.geometry.type === 'PlaneGeometry') return;
+  if (intersects.length > 0) {
+    let target = intersects[0].object;
 
-        while (target.parent && target.parent !== scene) {
-            target = target.parent;
-        }
+    if (target.geometry.type === "PlaneGeometry") return;
 
-        setSelectedObject(target);
-    } else {
-        setSelectedObject(null);
+    while (target.parent && target.parent !== scene) {
+      target = target.parent;
     }
+
+    setSelectedObject(target);
+  } else {
+    setSelectedObject(null);
+  }
 });
