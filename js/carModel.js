@@ -23,7 +23,7 @@ export function loadCarModel(scene, onLoaded) {
 
       car.scale.set(0.5, 0.5, 0.5);
       car.position.set(0, 0.1, 0);
-      car.rotation.y = Math.PI;
+      car.rotation.y = 0;
 
       car.traverse((child) => {
         if (child.isMesh) {

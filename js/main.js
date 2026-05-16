@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-// Import các module của team
+// Import các module của teamgi
 import { setupEnvironment } from "./environment.js";
 import { loadCarModel } from "./carModel.js";
 import { setupControls } from "./controls.js";
@@ -11,6 +11,7 @@ import { createRoad } from "./road.js";
 import { createTraffic, updateTraffic, getTrafficCars } from "./traffic.js";
 import { checkCollision } from "./collision.js";
 import { updateUI, showGameOver, hideGameOver, resetScore } from "./ui.js";
+import { loadVehicleModels } from "./vehicleLoader.js";
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xbfdfff);
@@ -36,12 +37,18 @@ document.body.appendChild(renderer.domElement);
 // const controls = new OrbitControls(camera, renderer.domElement);
 let playerCar = null;
 let gameOver = false;
-const axesHelper = new THREE.AxesHelper(5);
-scene.add(axesHelper);
 
 setupEnvironment(scene);
 createRoad(scene);
-createTraffic(scene);
+async function init() {
+  await loadVehicleModels();
+
+  createTraffic(scene);
+
+  animate();
+}
+
+init();
 setupControls();
 
 loadCarModel(scene, (car) => {
@@ -61,7 +68,7 @@ function animate() {
 
   updateCamera(camera, playerCar);
 
-  updateTraffic();
+  updateTraffic(playerCar);
 
   updateUI(getSpeed());
 
@@ -77,11 +84,11 @@ function animate() {
         // reset player
         playerCar.position.set(0, 0.1, 0);
 
-        playerCar.rotation.y = Math.PI;
+        playerCar.rotation.y = 0;
 
         // reset traffic
         getTrafficCars().forEach((car, index) => {
-          car.position.z = -20 - index * 20;
+          car.position.z = -20 - index * 50;
         });
 
         hideGameOver();
@@ -95,7 +102,7 @@ function animate() {
 
   renderer.render(scene, camera);
 }
-animate();
+// animate();
 
 import { handleTransformations, setSelectedObject } from "./geometry.js";
 
